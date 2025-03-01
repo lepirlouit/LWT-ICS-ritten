@@ -2,16 +2,17 @@
 
 /*
  * Plugin Name: Ics Ritten
- * Version : 1.0
+ * Version : 3.0
  * Requires at least: 5.3.0
  */
 
  // source : https://gist.github.com/Jany-M/af50d5c4a0eec2692734d76383ed4dd8
 
+$feedname = 'calendar-ritten';
 
 // Add a custom endpoint "calendar"
 function add_calendar_feed(){
-	add_feed('calendar', 'export_ics');
+	add_feed($feedname, 'export_ics');
 }
 add_action('init', 'add_calendar_feed');
 
@@ -33,7 +34,7 @@ register_activation_hook( __FILE__, 'pluginprefix_activate' );
  */
 function pluginprefix_deactivate() {
 	// Unregister the endpoint "calendar", so the rules are no longer in memory.
-    $hook = 'do_feed_' . 'calendar';
+    $hook = 'do_feed_' . $feedname;
 
 	// Remove default function hook.
 	remove_action( $hook, $hook );
@@ -73,9 +74,13 @@ if (strlen($string) >= $lenght) {
 
 
 
-// Calendar function
-function export_ics(){
 
+
+// Calendar function
+function export_ics(){?>
+ Hello World   
+<?php }
+/*
     // Query the event
     $the_event = new WP_Query(array(
         'p' => $_REQUEST['id'],
@@ -86,30 +91,7 @@ function export_ics(){
         
         while($the_event->have_posts()) : $the_event->the_post();
 	
-		// If your version of WP < 5.3.0 use the code below
 
-        /*  The correct date format, for ALL dates is date_i18n('Ymd\THis\Z',time(), true)
-            So if your date is not in this format, use that function    */
-	
-        $start_date = date_i18n("Ymd\THis\Z", get_post_meta( get_the_ID(), 'custom-field-of-start-date', true )); // EDIT THIS WITH YOUR OWN VALUE
-        $end_date = date_i18n("Ymd\THis\Z", get_post_meta( get_the_ID(), 'custom-field-of-end-date', true )); // EDIT THIS WITH YOUR OWN VALUE
-        $deadline = date_i18n("Ymd\THis\Z", get_post_meta( get_the_ID(), 'custom-field-of-deadline-date', true )); // EDIT THIS WITH YOUR OWN VALUE
-        
-		// Otherwise, if your version of WP >= 5.3.0 use this code
-		
-		$start_date = get_post_meta( get_the_ID(), 'custom-field-of-start-date', true ); // EDIT THIS WITH YOUR OWN VALUE
-        $end_date = get_post_meta( get_the_ID(), 'custom-field-of-end-date', true ); // EDIT THIS WITH YOUR OWN VALUE
-        if($start_date != '' && !isValidTimeStamp($start_date)) {
-            $start_date = strtotime($start_date);
-			$start_date = wp_date("Ymd\THis", $start_date);
-        }
-        if($end_date != '' && !isValidTimeStamp($end_date)) {
-            $end_date = strtotime($end_date);
-			$end_date = wp_date('Ymd\THis', $end_date);
-		} else {
-        	$end_date = wp_date("Ymd\THis", $start_date + (1 * 60 * 60)); // 1 hour after
-        }    
-		$deadline = date_i18n("Ymd\THis\Z", get_post_meta( get_the_ID(), 'custom-field-of-deadline-date', true )); // EDIT THIS WITH YOUR OWN VALUE
 		
 		// The rest is the same for any version
 		$timestamp = date_i18n('Ymd\THis\Z',time(), true);
@@ -156,11 +138,6 @@ SUMMARY:<?php echo $title.$eol; ?>
 ORGANIZER:<?php echo escapeString($organiser).$eol;?>
 URL;VALUE=URI:<?php echo escapeString($url).$eol; ?>
 TRANSP:OPAQUE
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER;VALUE=DATE-TIME:<?php echo $deadline.$eol; ?>
-DESCRIPTION:Reminder for <?php echo escapeString(get_the_title()); echo $eol; ?>
-END:VALARM
 END:VEVENT
 <?php
         endwhile;
@@ -175,10 +152,17 @@ END:VCALENDAR
 
     endif;
 
-}
-// USAGE in TEMPLATE
+}*/
 
-// <a href="<?php echo get_feed_link('calendar'); ?>?id=<?php echo get_the_ID(); ?>"> Download the ics/ical </a>
+add_shortcode('calendar-ritten', 'rittenIcal_shortcode');
+function rittenIcal_shortcode( $atts = [], $content = null) {
+    // do something to $content
+    // always return
+    ?><label for="iCalUrl">iCal Url:</label><input id="iCalUrl" type="text" readonly value="<?php echo get_feed_link($feedname); ?>?group=tempo"/> <?php
+    return ;
+}
+
+
 ?>
 
 
