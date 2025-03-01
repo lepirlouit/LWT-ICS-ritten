@@ -6,6 +6,8 @@
  * Requires at least: 5.3.0
  */
 
+ // source : https://gist.github.com/Jany-M/af50d5c4a0eec2692734d76383ed4dd8
+
 
 // Add a custom endpoint "calendar"
 function add_calendar_feed(){
