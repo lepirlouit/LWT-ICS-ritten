@@ -11,10 +11,12 @@
 
  // source : https://gist.github.com/Jany-M/af50d5c4a0eec2692734d76383ed4dd8
 
+global $feedname;
 $feedname = 'calendar-ritten';
 
 // Add a custom endpoint "calendar"
 function add_calendar_feed(){
+    global $feedname;
 	add_feed($feedname, 'export_ics');
 }
 add_action('init', 'add_calendar_feed');
@@ -37,6 +39,7 @@ register_activation_hook( __FILE__, 'pluginprefix_activate' );
  */
 function pluginprefix_deactivate() {
 	// Unregister the endpoint "calendar", so the rules are no longer in memory.
+    global $feedname;
     $hook = 'do_feed_' . $feedname;
 
 	// Remove default function hook.
@@ -86,9 +89,13 @@ function export_ics(){?>
 
 $groep = $_GET['groep'];
 global $wpdb;
-$sql = "SELECT lwt_users.`rijksregisternummer` FROM lwt_users WHERE lwt_users.`Id` = %s";
+$sql = "SELECT zondagritten.`omloop`, zondagritten.`vertrekuur`, zondagritten.`baankapitein`, zondagritten.`medewerker`, zondagritten.`afstand`, zondagritten.`datum`  FROM zondagritten WHERE zondagritten.`ploeg` like %s";
 $preparedSatement = $wpdb->prepare( $sql, $groep );
-$test= $wpdb->get_var($preparedSatement);
+$results = $wpdb->get_results($preparedSatement);
+foreach ( $results as $rit ) {
+    echo $rit->omloop;
+}
+}
 /*
     // Query the event
     $the_event = new WP_Query(array(
@@ -167,7 +174,7 @@ add_shortcode('calendar-ritten', 'rittenIcal_shortcode');
 function rittenIcal_shortcode( $atts = [], $content = null) {
     // do something to $content
     // always return
-    ?><label for="iCalUrl">iCal Url:</label><input id="iCalUrl" type="text" readonly value="<?php echo get_feed_link($feedname); ?>?group=tempo"/> <?php
+    ?><label for="iCalUrl">iCal Url:</label><input id="iCalUrl" type="text" readonly value="<?php global $feedname;echo get_feed_link($feedname); ?>?group=tempo"/> <?php
     return ;
 }
 
