@@ -2,8 +2,11 @@
 
 /*
  * Plugin Name: Ics Ritten
+ * Plugin URI: https://le.pirlou.it/wp_plugins
  * Version : 3.0
  * Requires at least: 5.3.0
+ * Author: Benoît de Biolley
+ * Author URI: https://le.pirlou.it/
  */
 
  // source : https://gist.github.com/Jany-M/af50d5c4a0eec2692734d76383ed4dd8
@@ -79,7 +82,13 @@ if (strlen($string) >= $lenght) {
 // Calendar function
 function export_ics(){?>
  Hello World   
-<?php }
+<?php 
+
+$groep = $_GET['groep'];
+global $wpdb;
+$sql = "SELECT lwt_users.`rijksregisternummer` FROM lwt_users WHERE lwt_users.`Id` = %s";
+$preparedSatement = $wpdb->prepare( $sql, $groep );
+$test= $wpdb->get_var($preparedSatement);
 /*
     // Query the event
     $the_event = new WP_Query(array(
