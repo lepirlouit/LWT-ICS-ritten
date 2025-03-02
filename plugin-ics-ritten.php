@@ -84,79 +84,56 @@ if (strlen($string) >= $lenght) {
 
 // Calendar function
 function export_ics(){?>
- Hello World   
-<?php 
-
-$groep = $_GET['groep'];
-global $wpdb;
-$sql = "SELECT zondagritten.`omloop`, zondagritten.`vertrekuur`, zondagritten.`baankapitein`, zondagritten.`medewerker`, zondagritten.`afstand`, zondagritten.`datum`  FROM zondagritten WHERE zondagritten.`ploeg` like %s";
-$preparedSatement = $wpdb->prepare( $sql, $groep );
-$results = $wpdb->get_results($preparedSatement);
-foreach ( $results as $rit ) {
-    echo $rit->omloop;
-}
-}
-/*
-    // Query the event
-    $the_event = new WP_Query(array(
-        'p' => $_REQUEST['id'],
-        'post_type' => 'any',
-    ));
-    
-    if($the_event->have_posts()) :
-        
-        while($the_event->have_posts()) : $the_event->the_post();
-	
-
-		
-		// The rest is the same for any version
-		$timestamp = date_i18n('Ymd\THis\Z',time(), true);
-		$uid = get_the_ID();
-		$created_date = get_post_time('Ymd\THis\Z', true, $uid );
-		$organiser = get_bloginfo('name'); // EDIT THIS WITH YOUR OWN VALUE
-        $address = ''; // EDIT THIS WITH YOUR OWN VALUE
-        $url = get_the_permalink();
-        $summary = get_the_excerpt();
-        $content = html_entity_decode(trim(preg_replace('/\s\s+/', ' ', get_the_content()))); // removes newlines and double spaces
-        $title = html_entity_decode(get_the_title());
-
-        //Give the iCal export a filename
-        $filename = urlencode( $title.'-ical-' . date('Y-m-d') . '.ics' );
-        $eol = "\r\n";
-
-        //Collect output
-        ob_start();
-
-        // Set the correct headers for this file
-        header("Content-Description: File Transfer");
-        header("Content-Disposition: attachment; filename=".$filename);
-        header('Content-type: text/calendar; charset=utf-8');
-        header("Pragma: 0");
-        header("Expires: 0");
-
-// The below ics structure MUST NOT have spaces before each line
-// Credit for the .ics structure goes to https://gist.github.com/jakebellacera/635416
-?>
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//<?php echo get_bloginfo('name'); ?> //NONSGML Events //EN
 CALSCALE:GREGORIAN
 X-WR-CALNAME:<?php echo get_bloginfo('name').$eol;?>
+X-WR-TIMEZONE:Europe/Brussels
+<?php 
+     //Give the iCal export a filename
+     $filename = urlencode( $title.'-ical-' . date('Y-m-d') . '.ics' );
+     $eol = "\r\n";
+     //Collect output
+     ob_start();
+      // Set the correct headers for this file
+        // header("Content-Description: File Transfer");
+        // header("Content-Disposition: attachment; filename=".$filename);
+        header('Content-type: text/calendar; charset=utf-8');
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+$groep = $_GET['groep'];
+global $wpdb;
+$sql = "SELECT zondagritten.`id`,zondagritten.`omloop`, zondagritten.`vertrekuur`, zondagritten.`baankapitein`, zondagritten.`medewerker`, zondagritten.`afstand`, zondagritten.`datum`  FROM zondagritten WHERE zondagritten.`ploeg` like %s";
+$preparedSatement = $wpdb->prepare( $sql, $groep );
+$results = $wpdb->get_results($preparedSatement);
+foreach ( $results as $rit ) {
+ 	// The rest is the same for any version
+	$timestamp = date_i18n('Ymd\THis\Z',time(), true);
+	$uid = "rit-".$rit->id;
+	// $created_date = get_post_time('Ymd\THis\Z', true, $uid );
+	// $organiser = get_bloginfo('name'); // EDIT THIS WITH YOUR OWN VALUE
+    $address = 'Schaliestraat 2, 1602 Sint-Pieters-Leeuw'; // EDIT THIS WITH YOUR OWN VALUE
+    // $url = get_the_permalink();
+    // $summary = get_the_summary($rit);
+    //  $content = html_entity_decode(trim(preg_replace('/\s\s+/', ' ', get_the_content()))); // removes newlines and double spaces
+     $title = "LWT - ".$ploeg." rit: ".$rit->omloop;
+
+
+// The below ics structure MUST NOT have spaces before each line
+// Credit for the .ics structure goes to https://gist.github.com/jakebellacera/635416
+?>
+
 BEGIN:VEVENT
 CREATED:<?php echo $created_date.$eol;?>
 UID:<?php echo $uid.$eol;?>
-DTEND;VALUE=DATE:<?php echo $end_date.$eol; ?>
-DTSTART;VALUE=DATE:<?php echo $start_date.$eol; ?>
-DTSTAMP:<?php echo $timestamp.$eol; ?>
+DTSTART;VALUE=DATE:<?php echo $rit->datum.$eol; ?>
 LOCATION:<?php echo escapeString($address).$eol; ?>
-DESCRIPTION:<?php echo $content.$eol; ?>
-SUMMARY:<?php echo $title.$eol; ?>
-ORGANIZER:<?php echo escapeString($organiser).$eol;?>
-URL;VALUE=URI:<?php echo escapeString($url).$eol; ?>
-TRANSP:OPAQUE
 END:VEVENT
 <?php
-        endwhile;
+// end foreach
+}
 ?>
 END:VCALENDAR
 <?php
@@ -166,7 +143,6 @@ END:VCALENDAR
         echo $eventsical;
         exit();
 
-    endif;
 
 }*/
 
