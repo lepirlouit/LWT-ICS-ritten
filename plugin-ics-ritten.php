@@ -83,17 +83,16 @@ if (strlen($string) >= $lenght) {
 
 
 // Calendar function
-function export_ics(){?>
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//<?php echo get_bloginfo('name'); ?> //NONSGML Events //EN
-CALSCALE:GREGORIAN
-X-WR-CALNAME:<?php echo get_bloginfo('name').$eol;?>
-X-WR-TIMEZONE:Europe/Brussels
-<?php 
-     //Give the iCal export a filename
-     $filename = urlencode( $title.'-ical-' . date('Y-m-d') . '.ics' );
-     $eol = "\r\n";
+function export_ics(){
+    $eol = "\r\n";
+    $groep = $_GET['groep'];
+    
+    echo "BEGIN:VCALENDAR".$eol;
+    echo "VERSION:2.0".$eol;
+    echo "PRODID:-//".get_bloginfo('name')."//NONSGML Events //EN".$eol;
+    echo "CALSCALE:GREGORIAN".$eol;
+    echo "X-WR-CALNAME:".get_bloginfo('name')." - ".$groep.$eol;
+    echo "X-WR-TIMEZONE:Europe/Brussels".$eol;
      //Collect output
      ob_start();
       // Set the correct headers for this file
@@ -103,58 +102,104 @@ X-WR-TIMEZONE:Europe/Brussels
         header("Pragma: no-cache");
         header("Expires: 0");
 
-$groep = $_GET['groep'];
 global $wpdb;
-$sql = "SELECT zondagritten.`id`,zondagritten.`omloop`, zondagritten.`vertrekuur`, zondagritten.`baankapitein`, zondagritten.`medewerker`, zondagritten.`afstand`, zondagritten.`datum`  FROM zondagritten WHERE zondagritten.`ploeg` like %s";
+$sql = "SELECT zondagritten.`id`,zondagritten.`omloop`, zondagritten.`vertrekuur`, zondagritten.`baankapitein`, zondagritten.`medewerker`, zondagritten.`volgwagen`, zondagritten.`afstand`, zondagritten.`datum`  FROM zondagritten WHERE zondagritten.`ploeg` like %s";
 $preparedSatement = $wpdb->prepare( $sql, $groep );
 $results = $wpdb->get_results($preparedSatement);
+date_default_timezone_set('Europe/Brussels');
 foreach ( $results as $rit ) {
+    $title = "LWT - ".$groep." rit ".$rit->omloop;
  	// The rest is the same for any version
 	$timestamp = date_i18n('Ymd\THis\Z',time(), true);
 	$uid = "rit-".$rit->id;
 	// $created_date = get_post_time('Ymd\THis\Z', true, $uid );
-	// $organiser = get_bloginfo('name'); // EDIT THIS WITH YOUR OWN VALUE
-    $address = 'Schaliestraat 2, 1602 Sint-Pieters-Leeuw'; // EDIT THIS WITH YOUR OWN VALUE
-    // $url = get_the_permalink();
-    // $summary = get_the_summary($rit);
-    //  $content = html_entity_decode(trim(preg_replace('/\s\s+/', ' ', get_the_content()))); // removes newlines and double spaces
-     $title = "LWT - ".$ploeg." rit: ".$rit->omloop;
+	$organiser = "Leeuwse Wieler Toeristen"; // EDIT THIS WITH YOUR OWN VALUE
+    $address = 'Schaliestraat 2, 1602 Sint-Pieters-Leeuw';
+    $url = "https://leeuwsewielertoeristen.be/lwt1/";
+    $content = "<span><br>";
+    if (!empty($rit->afstand)){
+	    $content .= "<b>Afstand</b>: ".$rit->afstand."km<br>";
+    }
+    if (!empty($rit->baankapitein)) {
+	    $content .= "<b>Baankapitein</b>: ".$rit->baankapitein."<br>";
+    }
+    if (!empty($rit->medewerker)) {
+	    $content .= "<b>Medewerker</b>: ".$rit->medewerker."<br>";
+    }
+    if (!empty($rit->volgwagen)) {
+	    $content .= "<b>Volgwagen</b>: ".$rit->volgwagen."<br>";
+    }
+    $content .= "</span>";
 
 
 // The below ics structure MUST NOT have spaces before each line
-// Credit for the .ics structure goes to https://gist.github.com/jakebellacera/635416
+    // Credit for the .ics structure goes to https://gist.github.com/jakebellacera/635416
+    $parsed=date_parse($rit->datum." ".$rit->vertrekuur." CET");
+    $start_date = mktime(
+        $parsed['hour'], 
+        $parsed['minute'], 
+        $parsed['second'], 
+        $parsed['month'], 
+        $parsed['day'], 
+        $parsed['year']
+    );
+    $end_date = mktime(
+	$parsed['hour']+4,
+        $parsed['minute'],
+        $parsed['second'],
+        $parsed['month'],
+        $parsed['day'],
+        $parsed['year']
+);
+    $end_date = wp_date("Ymd\THis\Z", $end_date, new DateTimeZone("UTC"));
+    $start_date = wp_date("Ymd\THis\Z", $start_date, new DateTimeZone("UTC"));
 ?>
-
-BEGIN:VEVENT
-CREATED:<?php echo $created_date.$eol;?>
+BEGIN:VEVENT<?php echo $eol;?>
 UID:<?php echo $uid.$eol;?>
-DTSTART;VALUE=DATE:<?php echo $rit->datum.$eol; ?>
-LOCATION:<?php echo escapeString($address).$eol; ?>
-END:VEVENT
+DTSTAMP:<?php echo $timestamp.$eol; ?>
+DTSTART:<?php echo  $start_date.$eol; ?>
+DTEND:<?php echo $end_date.$eol; ?>
 <?php
-// end foreach
+    $line = "DESCRIPTION:".$content;
+    if (strlen($line)> 75){
+	        $firstChunk = substr($line, 0, 75);
+    $least = substr($line, 75);
+    preg_match_all('/.{1,74}/', $least, $matches);
+
+    echo $firstChunk.$eol;
+    foreach ($matches[0] as $chunk) {
+        echo " " . $chunk.$eol;
+    }
+} else {
+    echo $line.$eol;
 }
 ?>
-END:VCALENDAR
+SUMMARY:<?php echo escapeString($title).$eol; ?>
+URL;VALUE=URI:<?php echo escapeString($url).$eol; ?>
+LOCATION:<?php echo escapeString($address).$eol; ?>
 <?php
+echo "END:VEVENT".$eol;
+// end foreach
+}
+echo "END:VCALENDAR".$eol;
+
         //Collect output and echo
-        $eventsical = ob_get_contents();
-        ob_end_clean();
-        echo $eventsical;
+        echo ob_get_clean();
         exit();
-
-
-}*/
+}
 
 add_shortcode('calendar-ritten', 'rittenIcal_shortcode');
 function rittenIcal_shortcode( $atts = [], $content = null) {
+	$atts = shortcode_atts( array(
+		'groep' => 'something',
+	), $atts );
+	ob_start();
+
     // do something to $content
     // always return
-    ?><label for="iCalUrl">iCal Url:</label><input id="iCalUrl" type="text" readonly value="<?php global $feedname;echo get_feed_link($feedname); ?>?group=tempo"/> <?php
-    return ;
+	?><div><label for="iCalUrl">iCal Url: </label><input id="iCalUrl" type="text" readonly size="65" value="<?php global $feedname;echo get_feed_link($feedname)."?groep=".esc_html( $atts['groep'] ); ?>" /></div><?php
+    return ob_get_clean();
 }
 
 
 ?>
-
-
